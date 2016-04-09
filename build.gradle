@@ -1,0 +1,88 @@
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "com.moowork.gradle:gradle-node-plugin:0.11"
+  }
+}
+
+plugins {
+    id "de.undercouch.download" version "2.1.0"
+}
+
+   apply plugin: "com.moowork.node"
+   import de.undercouch.gradle.tasks.download.Download
+
+node {
+    version = '0.12.7'
+    npmVersion = '2.7.5'
+    workDir = file("${projectDir}/lib/nodejs")
+    download = true
+}
+
+task downloadJar() {
+
+    download {
+        onlyIfNewer = true
+        src 'http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/2.1.5/swagger-codegen-cli-2.1.5.jar'
+        dest new File("lib/swagger-codegen-cli-2.1.5.jar")
+    }
+}
+
+task codegenJar(type: Exec) {
+  commandLine 'java','-jar','lib/swagger-codegen-cli-2.1.5.jar','generate','-i','../swagger.yaml','-t','proxy/templates','-l','nodejs','-o','.'
+}
+
+task delOpDir(type: Delete) {
+    delete "index.js", "lib", "test", "controllers", "api", "package.json", "node_modules"
+}
+
+task copyControllerJS(type: Copy) {
+    from('proxy/controllers/')
+    into('controllers')
+    include('*.js')
+}
+
+task copyTest(type: Copy) {
+    from('proxy/test/')
+    into('test')
+    include('*.js')
+}
+
+task packageInstall(type: NpmTask) {
+    args = ["install"]
+    workingDir = "."
+}
+
+task startServer(type: NodeTask) {
+    workingDir = "."
+    script = file('index.js')
+}
+
+task mocha(type: NpmTask){
+    args = ["test"]
+    workingDir = "."
+}
+
+task preBuild(dependsOn: ['downloadJar', 'codegenJar', 'copyControllerJS', 'copyTest'])
+    codegenJar.mustRunAfter downloadJar
+    copyControllerJS.mustRunAfter codegenJar
+    copyTest.mustRunAfter copyControllerJS
+
+task runTest(dependsOn: ['preBuild', 'packageInstall', 'mocha'])
+    packageInstall.mustRunAfter preBuild
+    mocha.mustRunAfter packageInstall
+
+
+task build(dependsOn: ['preBuild', 'packageInstall'])
+    packageInstall.mustRunAfter preBuild
+
+task runApp(dependsOn: ['build', 'startServer'])
+    startServer.mustRunAfter build
+
+task clean(type: Delete) {
+    delete "index.js", "lib", "test", "controllers", "api", "package.json", "node_modules"
+}
