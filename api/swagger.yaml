@@ -1,0 +1,133 @@
+---
+swagger: "2.0"
+info:
+  version: "2.0"
+  title: "A proxy API which ferries requests to the Watson Engagement Advisor (WEA)\
+    \ 3.0 API"
+host: "localhost:10010"
+basePath: "/v2"
+schemes:
+- "http"
+- "https"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /swagger:
+    x-swagger-pipe: "swagger_raw"
+  /workspaces/{workspace_id}/message:
+    post:
+      description: "Posts a message to the WEA 3.0 API. Proxy wrappers may chose to\
+        \ interept requests and/or responses before/after making the request to the\
+        \ WEA 3.0 API."
+      operationId: "message"
+      parameters:
+      - name: "workspace_id"
+        in: "path"
+        description: "An id used to identify the Dialog V2 workspace to send the request\
+          \ to"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "input"
+        description: "The input payload from the client, may contain state, tags and\
+          \ user input"
+        required: true
+        schema:
+          $ref: "#/definitions/MessageRequest"
+      responses:
+        200:
+          description: "Success"
+          schema:
+            $ref: "#/definitions/MessageResponse"
+          examples:
+            application/json: "{\n  \"intents\": [\n    {\n      \"intent_id\": \"\
+              pizza\",\n      \"confidence\": 0.94302\n    }\n  ],\n  \"entities\"\
+              : [\n    {\n      \"entity_id\": \"toppings\",\n      \"value\": \"\
+              pepperoni\",\n      \"location\": [\n        21,\n        30\n     \
+              \ ]\n    }\n  ],\n  \"output\": {\n    \"text\": [\"Great\",\" would\
+              \ you like anything else on your pizza?\"]\n  },\n  \"state\": {\n \
+              \   \"dialog_node_id\": \"pizza_order\",\n    \"conversation_id\": \"\
+              2a47d342\",\n    \"toppings\": [\n      \"pepperoni\"\n    ]\n  }\n}"
+        default:
+          description: "Error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    x-swagger-router-controller: "proxy_controller"
+definitions:
+  MessageRequest:
+    properties:
+      input:
+        description: "User input/utterance"
+        $ref: "#/definitions/UserInput"
+      tags:
+        type: "array"
+        description: "Tags which may be used to filter response possibilities"
+        items:
+          type: "string"
+      state:
+        type: "object"
+        description: "Dialog state object. Key value pairs may be passed in with each\
+          \ call. The state from the previous response must be passed in at a minimum."
+        properties: {}
+    description: "WEA 3.0 request object"
+  MessageResponse:
+    required:
+    - "entities"
+    - "intents"
+    - "output"
+    - "state"
+    properties:
+      intents:
+        type: "array"
+        description: "Intents as identified by the WEA 3.0 service"
+        items:
+          $ref: "#/definitions/MessageIntent"
+      entities:
+        type: "array"
+        description: "Entities as identified by the WEA 3.0 service"
+        items:
+          $ref: "#/definitions/MessageEntity"
+      output:
+        $ref: "#/definitions/MessageOutput"
+      state:
+        type: "object"
+        description: "State as returned by WEA 3.0 service. The client must store\
+          \ this state and pass it in (either modified or unmodified) with the next\
+          \ response"
+        additionalProperties:
+          type: "string"
+  MessageIntent:
+    properties:
+      intent_id:
+        type: "string"
+      confidence:
+        type: "number"
+        format: "double"
+  MessageEntity:
+    properties:
+      entity_id:
+        type: "string"
+      value:
+        type: "string"
+      location:
+        type: "array"
+        items:
+          type: "integer"
+  MessageOutput:
+    properties:
+      text:
+        type: "string"
+    description: "The textual output from the WEA service"
+  UserInput:
+    properties:
+      text:
+        type: "string"
+    description: "The textual input from the end user"
+  ErrorResponse:
+    required:
+    - "message"
+    properties:
+      message:
+        type: "string"
