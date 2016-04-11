@@ -11,13 +11,16 @@
     "test": "node_modules/.bin/mocha --timeout 15000 --reporter spec"
   },
   "dependencies": {
+    "cfenv": "1.0.x",
     "connect": "^3.2.0",
     "js-yaml": "^3.3.0",
     "swagger-tools": "0.9.*",
     "watson-developer-cloud": "https://github.com/doconnor78/node-sdk",
-    "vcap_services": "^0.1.7",
-	  "mocha": "2.3.1",
-	  "chai": "3.2.0", 
-	  "chai-http":"1.0.0"
+    "vcap_services": "^0.1.7"
+  },
+  "devDependencies": {
+    "mocha": "2.3.1",
+    "chai": "3.2.0",
+    "chai-http":"1.0.0"
   }
 }

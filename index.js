@@ -25,6 +25,7 @@ var http = require ( 'http' );
 var initializeSwagger = require ( 'swagger-tools' ).initializeMiddleware;
 var jsyaml = require ( 'js-yaml' );
 var fs = require ( 'fs' );
+var cfEnv = require('cfenv');
 var swagger_controller = require('./controllers/proxy_controller');
 
 // The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
@@ -56,7 +57,7 @@ exports = module.exports = startProxy;
  */
 function startProxy (options) {
     options = options || {};
-    var serverPort = options.port || 10010;
+    var serverPort = options.port || cfEnv.port || 10010;
     var webApp = options.app || app;
     var serverStartCallback = options.serverStartCallback;
     // Initialize the Swagger middleware
