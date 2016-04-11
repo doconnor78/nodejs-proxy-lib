@@ -57,7 +57,7 @@ exports = module.exports = startProxy;
  */
 function startProxy (options) {
     options = options || {};
-    var serverPort = options.port || cfEnv.port || 10010;
+    var serverPort = options.port || cfEnv.getAppEnv().port || 10010;
     var webApp = options.app || app;
     var serverStartCallback = options.serverStartCallback;
     // Initialize the Swagger middleware
