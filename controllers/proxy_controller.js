@@ -17,8 +17,6 @@
 
 var util = require ( 'util' );
 var watson = require ( 'watson-developer-cloud' );
-var beforeCallDialog;
-var afterCallDialog;
 
 module.exports = {
     message: message
@@ -37,14 +35,15 @@ function message (req, res) {
     var state = req.swagger.params.input.value.state;
     var tags = req.swagger.params.input.value.tags;
     var payload = {'workspace_id': id, 'input': input, 'tags': tags, 'state': state};
+    var beforeCallDialog = req.beforeCallDialog;
     if ( beforeCallDialog ) {
         //If a callout handler has been defined, call it first, with the payload.
         beforeCallDialog ( payload, function (newPayload) {
-            callDialog ( res, newPayload );
+            callDialog ( res, newPayload, req.afterCallDialog );
         } );
     }
     else {
-        callDialog ( res, payload );
+        callDialog ( res, payload, req.afterCallDialog );
     }
 }
 
@@ -52,7 +51,7 @@ function message (req, res) {
  * Private function which uses the Watson Services platform SDK to make requests to the
  * Dialog service.
  */
-function callDialog (res, payload) {
+function callDialog (res, payload, afterCallDialog) {
     var dialog = watson.dialog ( {
         'version': 'v2',
         'url': 'https://gateway-s.watsonplatform.net/dialog-beta/api'

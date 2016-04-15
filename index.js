@@ -25,8 +25,8 @@ var http = require ( 'http' );
 var initializeSwagger = require ( 'swagger-tools' ).initializeMiddleware;
 var jsyaml = require ( 'js-yaml' );
 var fs = require ( 'fs' );
-var cfEnv = require('cfenv');
-var swagger_controller = require('./controllers/proxy_controller');
+var cfEnv = require ( 'cfenv' );
+var swagger_controller = require ( './controllers/proxy_controller' );
 
 // The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
 var spec = fs.readFileSync ( __dirname + '/api/swagger.yaml', 'utf8' );
@@ -57,33 +57,45 @@ exports = module.exports = startProxy;
  */
 function startProxy (options) {
     options = options || {};
-    var serverPort = options.port || cfEnv.getAppEnv().port || 10010;
+    var serverPort = options.port || cfEnv.getAppEnv ().port || 10010;
     var webApp = options.app || app;
     var serverStartCallback = options.serverStartCallback;
-    // Initialize the Swagger middleware
+// Initialize the Swagger middleware
     initializeSwagger ( swaggerDoc, function (middleware) {
-        // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
-        webApp.use ( middleware.swaggerMetadata () );
+// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+        var metadata = middleware.swaggerMetadata ();
+        webApp.use ( metadata );
 
-        // Validate Swagger requests
+        webApp.use ( function (req, res, next) {
+            if ( options.beforeCallDialog ) {
+                req.beforeCallDialog = options.beforeCallDialog;
+            }
+            if ( options.afterCallDialog ) {
+                req.afterCallDialog = options.afterCallDialog;
+            }
+            next ();
+        } );
+
+// Validate Swagger requests
         webApp.use ( middleware.swaggerValidator () );
 
-        // Route validated requests to appropriate controller
-        // swaggerRouter configuration
+// Route validated requests to appropriate controller
+// swaggerRouter configuration
         var swaggerOptions = options.swaggerOptions || {
-             swaggerUi: '/swagger.json',
-             controllers: __dirname + '/controllers',
-             useStubs: process.env.NODE_ENV === 'development' ? true : false // Conditionally turn on stubs (mock mode)
-         };
+                swaggerUi: '/swagger.json',
+                controllers: __dirname + '/controllers',
+                useStubs: process.env.NODE_ENV === 'development' ? true : false // Conditionally turn on stubs (mock mode)
+            };
 
-        webApp.use ( middleware.swaggerRouter ( swaggerOptions ) );
+        var router = middleware.swaggerRouter ( swaggerOptions );
+        webApp.use ( router );
         swagger_controller.beforeCallDialog = options.beforeCallDialog;
         swagger_controller.afterCallDialog = options.afterCallDialog;
         if ( !options.hideSwaggerDoc ) {
-            // Serve the Swagger documents and Swagger UI
+// Serve the Swagger documents and Swagger UI
             webApp.use ( middleware.swaggerUi () );
         }
-        // Start the server
+// Start the server
         http.createServer ( webApp ).listen ( serverPort, serverStartCallback || function () {
                 console.log ( 'Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort );
                 if ( !options.hideSwaggerDoc ) {
