@@ -17,21 +17,31 @@
 
 'use strict';
 
-//Web app
+/*
+ * Module dependencies
+ */
 var app = require ( 'connect' ) ();
 var http = require ( 'http' );
 //Swagger middleware function. Adds REST endpoints to the app server based on the
-//API definition in the ./swagger/swagger.yaml file
+//API definition in the ./api/swagger.yaml file
 var initializeSwagger = require ( 'swagger-tools' ).initializeMiddleware;
-var jsyaml = require ( 'js-yaml' );
-var fs = require ( 'fs' );
-var cfEnv = require ( 'cfenv' );
+var jsyaml = require ( 'js-yaml' ); //yaml reader
+var fs = require ( 'fs' ); //file system reader
+var cfEnv = require ( 'cfenv' ); //bluemix environment lib
 var swagger_controller = require ( './controllers/proxy_controller' );
 
 // The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
 var spec = fs.readFileSync ( __dirname + '/api/swagger.yaml', 'utf8' );
 var swaggerDoc = jsyaml.safeLoad ( spec );
 
+/*
+ * Exposes the startProxy function. Consumers simply require this module and invoke it directly..
+ * ```
+ * var proxy = require ( 'wea-app-proxy' );
+ * ...
+ * proxy(args);
+ * ```
+ */
 exports = module.exports = startProxy;
 
 /*
@@ -39,8 +49,9 @@ exports = module.exports = startProxy;
  * The client may optionally pass in a pre-configured web server (express, connect etc) via the 'app'
  * variable. This web app will then be used by the swagger runtime to route REST requests as defined
  * in the swagger API doc.
- * The client may optionally set the callback which gets invoked once the web server is started via
- * the serverStartCallback callback.
+ * The client may optionally set the callbacks which gets invoked before and after a request is proxied
+ * to wea. There are two callbacks  
+ * `beforeCallDialog` and `afterCallDialog`.  
  * The client may set the port on which the http server is started, via the port variable,
  * 10010 by default.
  * The client may optionally turn off the Swagger UI for API documentation via the hideSwaggerDoc
@@ -48,7 +59,8 @@ exports = module.exports = startProxy;
  *
  * var options = {
  *                'app': your_web_server_app,
- *                'serverStartCallback': function(){//some code which gets executed once server starts},
+ *                'beforeCallDialog': function(...){...},
+ *                'afterCallDialog': function(...){...},
  *                'port': port_to_listen_on,
  *                'hideSwaggerDoc': true
  *                }
@@ -60,9 +72,9 @@ function startProxy (options) {
     var serverPort = options.port || cfEnv.getAppEnv ().port || 10010;
     var webApp = options.app || app;
     var serverStartCallback = options.serverStartCallback;
-// Initialize the Swagger middleware
+    // Initialize the Swagger middleware
     initializeSwagger ( swaggerDoc, function (middleware) {
-// Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+    // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
         var metadata = middleware.swaggerMetadata ();
         webApp.use ( metadata );
 
@@ -76,11 +88,11 @@ function startProxy (options) {
             next ();
         } );
 
-// Validate Swagger requests
+        // Validate Swagger requests
         webApp.use ( middleware.swaggerValidator () );
 
-// Route validated requests to appropriate controller
-// swaggerRouter configuration
+        // Route validated requests to appropriate controller
+        // swaggerRouter configuration
         var swaggerOptions = options.swaggerOptions || {
                 swaggerUi: '/swagger.json',
                 controllers: __dirname + '/controllers',
@@ -92,10 +104,10 @@ function startProxy (options) {
         swagger_controller.beforeCallDialog = options.beforeCallDialog;
         swagger_controller.afterCallDialog = options.afterCallDialog;
         if ( !options.hideSwaggerDoc ) {
-// Serve the Swagger documents and Swagger UI
+            // Serve the Swagger documents and Swagger UI
             webApp.use ( middleware.swaggerUi () );
         }
-// Start the server
+        // Start the server
         http.createServer ( webApp ).listen ( serverPort, serverStartCallback || function () {
                 console.log ( 'Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort );
                 if ( !options.hideSwaggerDoc ) {

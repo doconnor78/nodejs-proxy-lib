@@ -15,9 +15,16 @@
 
 'use strict';
 
+/*
+ * Module dependencies
+ */
+
 var util = require ( 'util' );
 var watson = require ( 'watson-developer-cloud' );
 
+/*
+ * Expose `message` API.
+ */
 module.exports = {
     message: message
 };
@@ -28,13 +35,24 @@ module.exports = {
  * been registered with the app. A callout if registered may optionally inject itself
  * into the request lifecycle by registering callbacks which get invoked before Dialog
  * is called and after Dialog is called.
+ * If a callout is not registered, then this function acts as a pure proxy to the WEA
+ * backend.
  */
 function message (req, res) {
     var id = req.swagger.params.workspace_id.value;
     var input = req.swagger.params.input.value.input;
-    var state = req.swagger.params.input.value.state;
+    var context = req.swagger.params.input.value.context;
     var tags = req.swagger.params.input.value.tags;
-    var payload = {'workspace_id': id, 'input': input, 'tags': tags, 'state': state};
+    var payload = {'workspace_id': id};
+    if(input){
+        payload.input = input;
+    }
+    if(context){
+        payload.context = context;
+    }
+    if(tags){
+        payload.tags = tags;
+    }
     var beforeCallDialog = req.beforeCallDialog;
     if ( beforeCallDialog ) {
         //If a callout handler has been defined, call it first, with the payload.
@@ -51,10 +69,10 @@ function message (req, res) {
  * Private function which uses the Watson Services platform SDK to make requests to the
  * Dialog service.
  */
-function callDialog (res, payload, afterCallDialog) {
+function callDialog (res, payload, afterCallDialogCallback) {
     var dialog = watson.dialog ( {
         'version': 'v2',
-        'url': 'https://gateway-s.watsonplatform.net/dialog-beta/api'
+        'url': 'https://gateway-s.watsonplatform.net/dialog-beta/api' //TODO remove this when SDK has correct URL
     } );
     var input = payload.input;
     if(!input){
@@ -65,9 +83,9 @@ function callDialog (res, payload, afterCallDialog) {
         if ( result ) {
             result.input = input;
         }
-        if ( afterCallDialog ) {
-            //If a callout handler has been defined, call it once a response is receied from dialog.
-            afterCallDialog ( error, result, function (error, result) {
+        if ( afterCallDialogCallback ) {
+            //If a callout handler has been defined, call it once a response is receied from WEA.
+            afterCallDialogCallback ( error, result, function (error, result) {
                 res.format ( {
                     "json": function () {
                         res.send ( result )

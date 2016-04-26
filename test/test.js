@@ -14,9 +14,8 @@
  */
 var chai = require('chai');
 var chaiHttp = require('chai-http');
-var server = require('../index');
+var server = require('./../index');
 var should = chai.should();
-var fs = require('fs');
 chai.use(chaiHttp);
 
 
@@ -25,7 +24,7 @@ describe('message', function() {
    var wid = 8769;
    chai.request(server)
     .post('/v2/workspaces/'+wid+'/message')
-    .send({"input": "some message","tags": ["tag1,tag2"],"state": {}})
+    .send({"input": { "text" : "some message"},"tags": ["tag1,tag2"],"state": {}})
     .end(function(err, res){
       res.should.have.status(200);
 	  res.body.should.be.a('object');

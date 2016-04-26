@@ -31,7 +31,7 @@ paths:
         type: "string"
       - in: "body"
         name: "input"
-        description: "The input payload from the client, may contain state, tags and\
+        description: "The input payload from the client, may contain context, tags and\
           \ user input"
         required: true
         schema:
@@ -47,7 +47,7 @@ paths:
               : [\n    {\n      \"entity_id\": \"toppings\",\n      \"value\": \"\
               pepperoni\",\n      \"location\": [\n        21,\n        30\n     \
               \ ]\n    }\n  ],\n  \"output\": {\n    \"text\": [\"Great\",\" would\
-              \ you like anything else on your pizza?\"]\n  },\n  \"state\": {\n \
+              \ you like anything else on your pizza?\"]\n  },\n  \"context\": {\n \
               \   \"dialog_node_id\": \"pizza_order\",\n    \"conversation_id\": \"\
               2a47d342\",\n    \"toppings\": [\n      \"pepperoni\"\n    ]\n  }\n}"
         default:
@@ -66,10 +66,10 @@ definitions:
         description: "Tags which may be used to filter response possibilities"
         items:
           type: "string"
-      state:
+      context:
         type: "object"
-        description: "Dialog state object. Key value pairs may be passed in with each\
-          \ call. The state from the previous response must be passed in at a minimum."
+        description: "Dialog context object. Key value pairs may be passed in with each\
+          \ call. The context from the previous response must be passed in at a minimum."
         properties: {}
     description: "WEA 3.0 request object"
   MessageResponse:
@@ -77,7 +77,7 @@ definitions:
     - "entities"
     - "intents"
     - "output"
-    - "state"
+    - "context"
     properties:
       intents:
         type: "array"
@@ -91,10 +91,10 @@ definitions:
           $ref: "#/definitions/MessageEntity"
       output:
         $ref: "#/definitions/MessageOutput"
-      state:
+      context:
         type: "object"
-        description: "State as returned by WEA 3.0 service. The client must store\
-          \ this state and pass it in (either modified or unmodified) with the next\
+        description: "Context as returned by WEA 3.0 service. The client must store\
+          \ this context and pass it in (either modified or unmodified) with the next\
           \ response"
         additionalProperties:
           type: "string"
