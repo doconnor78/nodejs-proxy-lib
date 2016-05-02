@@ -2,10 +2,9 @@
 swagger: "2.0"
 info:
   version: "2.0"
-  title: "A proxy API which ferries requests to the Watson Engagement Advisor (WEA)\
-    \ 3.0 API"
+  title: "A proxy API which ferries requests to the Watson Conversation Service"
 host: "localhost:10010"
-basePath: "/v2"
+basePath: "/api/v1"
 schemes:
 - "http"
 - "https"
@@ -18,15 +17,14 @@ paths:
     x-swagger-pipe: "swagger_raw"
   /workspaces/{workspace_id}/message:
     post:
-      description: "Posts a message to the WEA 3.0 API. Proxy wrappers may chose to\
+      description: "Posts a message to the Conversation Service. Proxy wrappers may chose to\
         \ interept requests and/or responses before/after making the request to the\
-        \ WEA 3.0 API."
+        \ actual service API."
       operationId: "message"
       parameters:
       - name: "workspace_id"
         in: "path"
-        description: "An id used to identify the Dialog V2 workspace to send the request\
-          \ to"
+        description: "An id used to identify the workspace to send the request to"
         required: true
         type: "string"
       - in: "body"
@@ -42,13 +40,13 @@ paths:
           schema:
             $ref: "#/definitions/MessageResponse"
           examples:
-            application/json: "{\n  \"intents\": [\n    {\n      \"intent_id\": \"\
+            application/json: "{\n  \"intents\": [\n    {\n      \"intent\": \"\
               pizza\",\n      \"confidence\": 0.94302\n    }\n  ],\n  \"entities\"\
-              : [\n    {\n      \"entity_id\": \"toppings\",\n      \"value\": \"\
+              : [\n    {\n      \"entity\": \"toppings\",\n      \"value\": \"\
               pepperoni\",\n      \"location\": [\n        21,\n        30\n     \
               \ ]\n    }\n  ],\n  \"output\": {\n    \"text\": [\"Great\",\" would\
               \ you like anything else on your pizza?\"]\n  },\n  \"context\": {\n \
-              \   \"dialog_node_id\": \"pizza_order\",\n    \"conversation_id\": \"\
+              \   \"dialog_node\": \"pizza_order\",\n    \"conversation_id\": \"\
               2a47d342\",\n    \"toppings\": [\n      \"pepperoni\"\n    ]\n  }\n}"
         default:
           description: "Error"
@@ -63,7 +61,7 @@ definitions:
         $ref: "#/definitions/UserInput"
       tags:
         type: "array"
-        description: "Tags which may be used to filter response possibilities"
+        description: "Tags which may be used to filter response which intents are valid for the given request"
         items:
           type: "string"
       context:
@@ -71,7 +69,7 @@ definitions:
         description: "Dialog context object. Key value pairs may be passed in with each\
           \ call. The context from the previous response must be passed in at a minimum."
         properties: {}
-    description: "WEA 3.0 request object"
+    description: "Conversation API request object"
   MessageResponse:
     required:
     - "entities"
@@ -81,21 +79,21 @@ definitions:
     properties:
       intents:
         type: "array"
-        description: "Intents as identified by the WEA 3.0 service"
+        description: "Intents as identified by the Conversation service"
         items:
           $ref: "#/definitions/MessageIntent"
       entities:
         type: "array"
-        description: "Entities as identified by the WEA 3.0 service"
+        description: "Entities as identified by the Conversation service"
         items:
           $ref: "#/definitions/MessageEntity"
       output:
         $ref: "#/definitions/MessageOutput"
       context:
         type: "object"
-        description: "Context as returned by WEA 3.0 service. The client must store\
+        description: "Context as returned by the Conversation service. The client must store\
           \ this context and pass it in (either modified or unmodified) with the next\
-          \ response"
+          \ request"
         additionalProperties:
           type: "string"
   MessageIntent:
@@ -119,7 +117,7 @@ definitions:
     properties:
       text:
         type: "string"
-    description: "The textual output from the WEA service"
+    description: "The textual output from the Conversation service"
   UserInput:
     properties:
       text:
