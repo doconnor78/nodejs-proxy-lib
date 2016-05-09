@@ -53,15 +53,15 @@ function message (req, res) {
     if(tags){
         payload.tags = tags;
     }
-    var beforeCallDialog = req.beforeCallDialog;
-    if ( beforeCallDialog ) {
+    var beforeSendMessage = req.beforeSendMessage;
+    if ( beforeSendMessage ) {
         //If a callout handler has been defined, call it first, with the payload.
-        beforeCallDialog ( payload, function (newPayload) {
-            callDialog ( res, newPayload, req.afterCallDialog );
+        beforeSendMessage ( payload, function (newPayload) {
+            sendMessage ( res, newPayload, req.afterSendMessage );
         } );
     }
     else {
-        callDialog ( res, payload, req.afterCallDialog );
+        sendMessage ( res, payload, req.afterSendMessage );
     }
 }
 
@@ -69,9 +69,9 @@ function message (req, res) {
  * Private function which uses the Watson Services platform SDK to make requests to the
  * Dialog service.
  */
-function callDialog (res, payload, afterCallDialogCallback) {
-    var dialog = watson.dialog ( {
-        'version': 'v2',
+function sendMessage (res, payload, afterSendMessageCallback) {
+    var conversation = watson.conversation ( {
+        'version': 'v1',
         'url': 'https://gateway-s.watsonplatform.net/dialog-beta/api' //TODO remove this when SDK has correct URL
     } );
     var input = payload.input;
@@ -79,13 +79,13 @@ function callDialog (res, payload, afterCallDialogCallback) {
         delete payload.input;
     }
 
-    dialog.message ( payload, function response (error, result, response_message) {
+    conversation.message ( payload, function response (error, result, response_message) {
         if ( result ) {
             result.input = input;
         }
-        if ( afterCallDialogCallback ) {
+        if ( afterSendMessageCallback ) {
             //If a callout handler has been defined, call it once a response is receied from WEA.
-            afterCallDialogCallback ( error, result, function (error, result) {
+            afterSendMessageCallback ( error, result, function (error, result) {
                 res.format ( {
                     "json": function () {
                         res.send ( result )
