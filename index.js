@@ -50,8 +50,8 @@ exports = module.exports = startProxy;
  * variable. This web app will then be used by the swagger runtime to route REST requests as defined
  * in the swagger API doc.
  * The client may optionally set the callbacks which gets invoked before and after a request is proxied
- * to wea. There are two callbacks  
- * `beforeCallDialog` and `afterCallDialog`.  
+ * to wea. There are two callbacks
+ * `beforeCallDialog` and `afterCallDialog`.
  * The client may set the port on which the http server is started, via the port variable,
  * 10010 by default.
  * The client may optionally turn off the Swagger UI for API documentation via the hideSwaggerDoc
@@ -79,11 +79,11 @@ function startProxy (options) {
         webApp.use ( metadata );
 
         webApp.use ( function (req, res, next) {
-            if ( options.beforeCallDialog ) {
-                req.beforeCallDialog = options.beforeCallDialog;
+            if ( options.beforeSendMessage ) {
+                req.beforeSendMessage = options.beforeSendMessage;
             }
-            if ( options.afterCallDialog ) {
-                req.afterCallDialog = options.afterCallDialog;
+            if ( options.afterSendMessage ) {
+                req.afterSendMessage = options.afterSendMessage;
             }
             next ();
         } );
@@ -101,8 +101,6 @@ function startProxy (options) {
 
         var router = middleware.swaggerRouter ( swaggerOptions );
         webApp.use ( router );
-        swagger_controller.beforeCallDialog = options.beforeCallDialog;
-        swagger_controller.afterCallDialog = options.afterCallDialog;
         if ( !options.hideSwaggerDoc ) {
             // Serve the Swagger documents and Swagger UI
             webApp.use ( middleware.swaggerUi () );
