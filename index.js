@@ -107,7 +107,7 @@ function startProxy (options) {
         }
         // Start the server
         http.createServer ( webApp ).listen ( serverPort, serverStartCallback || function () {
-                console.log ( 'Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort );
+                console.log ( 'Your server is listening on port %d (http://localhost:%d)\n', serverPort, serverPort );
                 if ( !options.hideSwaggerDoc ) {
                     console.log ( 'Swagger-ui is available on http://localhost:%d/docs', serverPort );
                 }
